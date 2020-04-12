@@ -140,6 +140,9 @@ function () {
     /** 隣接するパーツへの参照 */
 
     this.neighbors = new Map();
+    /** 回転完了状態のフラグ */
+
+    this.hasRotated = false;
     this.init();
   }
 
@@ -199,10 +202,6 @@ function () {
     this.neighbors.forEach(function (part, direction) {
       if (direction === 'top' && (part.rotation === 1 || part.rotation === 2) && (_this.rotation === 0 || _this.rotation === 3) || direction === 'right' && (part.rotation === 2 || part.rotation === 3) && (_this.rotation === 0 || _this.rotation === 1) || direction === 'bottom' && (part.rotation === 0 || part.rotation === 3) && (_this.rotation === 1 || _this.rotation === 2) || direction === 'left' && (part.rotation === 0 || part.rotation === 1) && (_this.rotation === 2 || _this.rotation === 3)) {
         part.rotate();
-
-        if (direction === 'top' || direction === 'left') {
-          part.update();
-        }
       }
     });
   };
@@ -216,8 +215,17 @@ function () {
       if (++this.rotatingCount == 10) {
         this._isRotating = false;
         this.rotation = (this.rotation + 1) % 4;
-        this.rotateNeighbors();
+        this.hasRotated = true;
       }
+    }
+  };
+  /** 回転完了時の隣接要素の更新 */
+
+
+  ChainPart.prototype.updateNeighbors = function () {
+    if (this.hasRotated) {
+      this.rotateNeighbors();
+      this.hasRotated = false;
     }
   };
   /** 画面描画 */
@@ -255,7 +263,7 @@ exports.ChainPart = ChainPart;
 {
   ChainPart.audioCtx = new AudioContext();
   ChainPart.gainNode = ChainPart.audioCtx.createGain();
-  ChainPart.gainNode.gain.value = 0.01;
+  ChainPart.gainNode.gain.value = 0.008;
   ChainPart.gainNode.connect(ChainPart.audioCtx.destination);
 }
 },{}],"ts/chain-game.ts":[function(require,module,exports) {
@@ -282,12 +290,15 @@ function () {
     this.canvas = canvas;
     this.context = canvas.getContext('2d');
     this.canvasRect = canvas.getBoundingClientRect();
+    this.bufferCanvas = document.createElement('canvas');
+    this.bufferContext = this.bufferCanvas.getContext('2d');
   }
   /** ゲームの開始 */
 
 
   ChainGame.prototype.start = function () {
     this.canvas.width = this.canvas.height = CANVAS_SIZE;
+    this.bufferCanvas.width = this.bufferCanvas.height = CANVAS_SIZE;
     this.canvas.addEventListener('mousedown', this.onClick.bind(this));
     this.parts = Array.from(Array(PART_COUNT), function (_, y) {
       return Array.from(Array(PART_COUNT), function (_, x) {
@@ -315,9 +326,10 @@ function () {
           part.appendNeighbor('left', this.parts[y][x - 1]);
         }
       }
-    }
+    } // TODO: requestAnimationFrameを使うよりも早い？ 要検証
 
-    this.timer = setInterval(this.update.bind(this), 1000 / 33);
+
+    this.timer = setInterval(this.update.bind(this), 1000 / 60);
     console.log('chain game started!');
   };
   /** ゲームのリセット */
@@ -354,6 +366,15 @@ function () {
       }
     }
 
+    for (var _c = 0, _d = this.parts; _c < _d.length; _c++) {
+      var parts = _d[_c];
+
+      for (var _e = 0, parts_3 = parts; _e < parts_3.length; _e++) {
+        var part = parts_3[_e];
+        part.updateNeighbors();
+      }
+    }
+
     this.draw();
   };
   /** 画面描画 */
@@ -361,15 +382,18 @@ function () {
 
   ChainGame.prototype.draw = function () {
     this.context.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    this.bufferContext.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
     for (var _i = 0, _a = this.parts; _i < _a.length; _i++) {
       var parts = _a[_i];
 
-      for (var _b = 0, parts_3 = parts; _b < parts_3.length; _b++) {
-        var part = parts_3[_b];
-        part.draw(this.context);
+      for (var _b = 0, parts_4 = parts; _b < parts_4.length; _b++) {
+        var part = parts_4[_b];
+        part.draw(this.bufferContext);
       }
     }
+
+    this.context.drawImage(this.bufferCanvas, 0, 0, CANVAS_SIZE, CANVAS_SIZE);
   };
   /** キャンバスクリック時のイベントハンドラ */
 
@@ -430,7 +454,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "58834" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59081" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
