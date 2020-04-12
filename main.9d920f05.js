@@ -5,4 +5,4 @@ parcelRequire=function(e,r,t,n){var i,o="function"==typeof parcelRequire&&parcel
 },{"./chain-part":"SjuR"}],"g7hl":[function(require,module,exports) {
 "use strict";Object.defineProperty(exports,"__esModule",{value:!0});var e=require("./chain-game");function t(){var t=document.getElementById("canvas"),n=new e.ChainGame(t);n.start(),document.getElementById("reset").addEventListener("click",n.reset.bind(n))}t();
 },{"./chain-game":"KTFm"}]},{},["g7hl"], null)
-//# sourceMappingURL=/main.9d920f05.js.map
+//# sourceMappingURL=main.9d920f05.js.map
