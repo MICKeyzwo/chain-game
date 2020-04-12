@@ -2,7 +2,7 @@
 simple browser game like cell automaton.
 
 ## how to play
-visit [here]()
+visit [here](https://MICKeyzwo.github.io/chain-game)
 
 ## how to develop
 1. Install `parcel-bundler` with global flag: `npm i -g parcel-bundler`
