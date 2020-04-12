@@ -31,6 +31,9 @@ export class ChainPart {
     /** 隣接するパーツへの参照 */
     private neighbors = new Map<Direction, ChainPart>();
 
+    /** 回転完了状態のフラグ */
+    private hasRotated = false;
+
 
     /** 音声コンテキスト */
     static audioCtx: AudioContext;
@@ -115,9 +118,6 @@ export class ChainPart {
                 )
             ) {
                 part.rotate();
-                if (direction === 'top' || direction === 'left') {
-                    part.update();
-                }
             }
         });
 
@@ -131,10 +131,18 @@ export class ChainPart {
             if (++this.rotatingCount == 10) {
                 this._isRotating = false;
                 this.rotation = (this.rotation + 1) % 4 as RotateStatus;
-                this.rotateNeighbors();
+                this.hasRotated = true;
             }
         }
 
+    }
+
+    /** 回転完了時の隣接要素の更新 */
+    updateNeighbors(): void {
+        if (this.hasRotated) {
+            this.rotateNeighbors();
+            this.hasRotated = false;
+        }
     }
 
     /** 画面描画 */
@@ -172,7 +180,7 @@ export class ChainPart {
 
     ChainPart.audioCtx = new AudioContext();
     ChainPart.gainNode = ChainPart.audioCtx.createGain();
-    ChainPart.gainNode.gain.value = 0.01;
+    ChainPart.gainNode.gain.value = 0.008;
     ChainPart.gainNode.connect(ChainPart.audioCtx.destination);
 
 }

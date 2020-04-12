@@ -13,6 +13,12 @@ export class ChainGame {
     /** キャンバスコンテキスト */
     private context: CanvasRenderingContext2D;
 
+    /** バッファキャンバス */
+    private bufferCanvas: HTMLCanvasElement;
+
+    /** バッファキャンバスのコンテキスト */
+    private bufferContext: CanvasRenderingContext2D;
+
     /** キャンバスの座標情報 */
     private canvasRect: DOMRect;
 
@@ -28,6 +34,8 @@ export class ChainGame {
     ) {
         this.context = canvas.getContext('2d');
         this.canvasRect = canvas.getBoundingClientRect();
+        this.bufferCanvas = document.createElement('canvas');
+        this.bufferContext = this.bufferCanvas.getContext('2d');
     }
 
 
@@ -35,6 +43,7 @@ export class ChainGame {
     start(): void {
 
         this.canvas.width = this.canvas.height = CANVAS_SIZE;
+        this.bufferCanvas.width = this.bufferCanvas.height = CANVAS_SIZE;
 
         this.canvas.addEventListener('mousedown', this.onClick.bind(this));
 
@@ -62,7 +71,8 @@ export class ChainGame {
             }
         }
 
-        this.timer = setInterval(this.update.bind(this), 1000 / 33);
+        // TODO: requestAnimationFrameを使うよりも早い？ 要検証
+        this.timer = setInterval(this.update.bind(this), 1000 / 60);
 
         console.log('chain game started!');
 
@@ -97,6 +107,12 @@ export class ChainGame {
             }
         }
 
+        for (const parts of this.parts) {
+            for (const part of parts) {
+                part.updateNeighbors();
+            }
+        }
+
         this.draw();
 
     }
@@ -105,12 +121,15 @@ export class ChainGame {
     private draw(): void {
 
         this.context.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+        this.bufferContext.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
         for (const parts of this.parts) {
             for (const part of parts) {
-                part.draw(this.context);
+                part.draw(this.bufferContext);
             }
         }
+
+        this.context.drawImage(this.bufferCanvas, 0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
     }
 
