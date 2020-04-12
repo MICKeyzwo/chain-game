@@ -1,0 +1,20 @@
+{
+  "name": "chain-game",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "parcel ./src/index.html -d ./dist",
+    "build": "parcel build ./src/index.html -d ./dist",
+    "publish": "parcel build ./src/index.html -d ./dist && node publish.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "gh-pages": "^2.2.0",
+    "sass": "^1.26.3",
+    "typescript": "^3.8.3"
+  }
+}
