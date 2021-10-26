@@ -23,19 +23,38 @@ export class ChainGame {
     private canvasRect: DOMRect;
 
     /** パーツ郡への参照 */
-    private parts: ChainPart[][];
+    private parts?: ChainPart[][];
 
     /** タイマーのID */
-    private timer: number;
+    private timer?: number;
+
+
+    /** 音声コンテキスト */
+    static audioCtx = new AudioContext();
+
+    /** 音量設定用のゲインノード群 */
+    static gainNodes = new Array(4).fill(0).map((_, i) => {
+        const gainNode = ChainGame.audioCtx.createGain();
+        gainNode.gain.value = 0;
+        gainNode.connect(ChainGame.audioCtx.destination);
+
+        const osc = new OscillatorNode(ChainGame.audioCtx);
+        osc.type = 'sine';
+        osc.frequency.value = 300 + i * 100;
+        osc.connect(gainNode);
+        osc.start();
+        
+        return gainNode;
+    });
 
 
     constructor(
         private canvas: HTMLCanvasElement
     ) {
-        this.context = canvas.getContext('2d');
+        this.context = canvas.getContext('2d')!;
         this.canvasRect = canvas.getBoundingClientRect();
         this.bufferCanvas = document.createElement('canvas');
-        this.bufferContext = this.bufferCanvas.getContext('2d');
+        this.bufferContext = this.bufferCanvas.getContext('2d')!;
     }
 
 
@@ -81,7 +100,7 @@ export class ChainGame {
     /** ゲームのリセット */
     reset(): void {
 
-        for (const parts of this.parts) {
+        for (const parts of this.parts ?? []) {
             for (const part of parts) {
                 part.init();
             }
@@ -101,13 +120,15 @@ export class ChainGame {
     /** フレーム毎の更新 */
     private update(): void {
 
-        for (const parts of this.parts) {
+        for (const parts of this.parts ?? []) {
             for (const part of parts) {
                 part.update();
             }
         }
 
-        for (const parts of this.parts) {
+        this.playSound();
+
+        for (const parts of this.parts ?? []) {
             for (const part of parts) {
                 part.updateNeighbors();
             }
@@ -117,13 +138,35 @@ export class ChainGame {
 
     }
 
+    /** 効果音の再生 */
+    private playSound() {
+
+        const counts = [0, 0, 0, 0];
+        for (const parts of this.parts ?? []) {
+            for (const part of parts) {
+                if (part.hasRotated) {
+                    counts[part.rotation]++;
+                }
+            }
+        }
+        
+        counts.forEach((count, i) => {
+            if (count > 0) {
+                const { gain } = ChainGame.gainNodes[i];
+                gain.value = Math.min(0.008 + count * 0.002, 0.1);
+                setTimeout(() => gain.value = 0, 100);
+            }
+        });
+        
+    }
+
     /** 画面描画 */
     private draw(): void {
 
         this.context.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
         this.bufferContext.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-        for (const parts of this.parts) {
+        for (const parts of this.parts ?? []) {
             for (const part of parts) {
                 part.draw(this.bufferContext);
             }
@@ -138,7 +181,7 @@ export class ChainGame {
 
         const x = Math.floor((e.clientX - this.canvasRect.x) / PART_SIZE);
         const y = Math.floor((e.clientY - this.canvasRect.y) / PART_SIZE);
-        this.parts[y][x].rotate();
+        this.parts?.[y][x].rotate();
 
     }
 

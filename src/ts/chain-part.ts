@@ -11,14 +11,19 @@ type RotateStatus = 0 | 1 | 2 | 3;
 /** 個々のパーツクラス */
 export class ChainPart {
 
-    /** 描画時の傾き */
-    private angle: number;
-
     /** 回転状態 */
-    private rotation: RotateStatus;
+    private _rotation = Math.floor(Math.random() * 4) as RotateStatus;
+
+    /** 回転状態、公開用 */
+    get rotation(): RotateStatus {
+        return this._rotation;
+    }
+
+    /** 描画時の傾き */
+    private angle = Math.PI / 2 * this._rotation;
 
     /** 回転のステップ数 */
-    private rotatingCount: number;
+    private rotatingCount = 0;
 
     /** 回転しているかどうかの状態 */
     private _isRotating = false;
@@ -32,29 +37,25 @@ export class ChainPart {
     private neighbors = new Map<Direction, ChainPart>();
 
     /** 回転完了状態のフラグ */
-    private hasRotated = false;
+    private _hasRotated = false;
 
-
-    /** 音声コンテキスト */
-    static audioCtx: AudioContext;
-
-    /** 音量調整用のゲインノード */
-    static gainNode: GainNode;
+    /** 回転完了状態のフラグ、公開用 */
+    get hasRotated(): boolean {
+        return this._hasRotated;
+    }
 
 
     constructor(
         private x: number,
         private y: number
-    ) {
-        this.init();
-    }
+    ) { }
 
 
     /** 回転状態の初期化 */
     init(): void {
 
-        this.rotation = Math.floor(Math.random() * 4) as RotateStatus;
-        this.angle = Math.PI / 2 * this.rotation;
+        this._rotation = Math.floor(Math.random() * 4) as RotateStatus;
+        this.angle = Math.PI / 2 * this._rotation;
         this._isRotating = false;
         this.rotatingCount = 0;
 
@@ -75,19 +76,6 @@ export class ChainPart {
         }
         this._isRotating = true;
         this.rotatingCount = 0;
-        this.playSound();
-
-    }
-
-    /** 回転時の効果音を鳴らす */
-    private playSound(): void {
-
-        const osc = new OscillatorNode(ChainPart.audioCtx);
-        osc.type = 'sine';
-        osc.frequency.value = 300 + this.rotation * 100;
-        osc.connect(ChainPart.gainNode);
-        osc.start();
-        setTimeout(() => osc.stop(), 100);
 
     }
 
@@ -98,23 +86,23 @@ export class ChainPart {
             if (
                 (
                     direction === 'top' &&
-                    (part.rotation === 1 || part.rotation === 2) &&
-                    (this.rotation === 0 || this.rotation === 3)
+                    (part._rotation === 1 || part._rotation === 2) &&
+                    (this._rotation === 0 || this._rotation === 3)
                 ) ||
                 (
                     direction === 'right' &&
-                    (part.rotation === 2 || part.rotation === 3) &&
-                    (this.rotation === 0 || this.rotation === 1)
+                    (part._rotation === 2 || part._rotation === 3) &&
+                    (this._rotation === 0 || this._rotation === 1)
                 ) ||
                 (
                     direction === 'bottom' &&
-                    (part.rotation === 0 || part.rotation === 3) &&
-                    (this.rotation === 1 || this.rotation === 2)
+                    (part._rotation === 0 || part._rotation === 3) &&
+                    (this._rotation === 1 || this._rotation === 2)
                 ) ||
                 (
                     direction === 'left' &&
-                    (part.rotation === 0 || part.rotation === 1) &&
-                    (this.rotation === 2 || this.rotation === 3)
+                    (part._rotation === 0 || part._rotation === 1) &&
+                    (this._rotation === 2 || this._rotation === 3)
                 )
             ) {
                 part.rotate();
@@ -130,8 +118,8 @@ export class ChainPart {
             this.angle = (this.angle + Math.PI / 20) % (Math.PI * 2);
             if (++this.rotatingCount == 10) {
                 this._isRotating = false;
-                this.rotation = (this.rotation + 1) % 4 as RotateStatus;
-                this.hasRotated = true;
+                this._rotation = (this._rotation + 1) % 4 as RotateStatus;
+                this._hasRotated = true;
             }
         }
 
@@ -139,9 +127,9 @@ export class ChainPart {
 
     /** 回転完了時の隣接要素の更新 */
     updateNeighbors(): void {
-        if (this.hasRotated) {
+        if (this._hasRotated) {
             this.rotateNeighbors();
-            this.hasRotated = false;
+            this._hasRotated = false;
         }
     }
 
@@ -152,9 +140,9 @@ export class ChainPart {
         ctx.save();
         ctx.fillStyle = '#ddd';
         ctx.strokeStyle = 
-            this.rotation === 0 ? 'blue' :
-            this.rotation === 1 ? 'red' :
-            this.rotation === 2 ? 'green' :
+            this._rotation === 0 ? 'blue' :
+            this._rotation === 1 ? 'red' :
+            this._rotation === 2 ? 'green' :
             'orange';
         ctx.lineWidth = 2;
         ctx.translate(this.x + harfSize, this.y + harfSize);
@@ -174,14 +162,3 @@ export class ChainPart {
     }
 
 }
-
-/** パーツクラスのスタティックメンバの初期化 */
-{
-
-    ChainPart.audioCtx = new AudioContext();
-    ChainPart.gainNode = ChainPart.audioCtx.createGain();
-    ChainPart.gainNode.gain.value = 0.008;
-    ChainPart.gainNode.connect(ChainPart.audioCtx.destination);
-
-}
-

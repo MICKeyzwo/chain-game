@@ -4,18 +4,17 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "parcel ./src/index.html -d ./dist",
-    "build": "parcel build ./src/index.html -d ./dist --public-url ./",
+    "start": "vite",
+    "build": "tsc && vite build",
     "publish": "npm run build && node publish.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "cssnano": "^4.1.10",
     "gh-pages": "^2.2.0",
-    "sass": "^1.26.3",
-    "typescript": "^3.8.3"
+    "sass": "^1.43.3",
+    "typescript": "^3.9.10",
+    "vite": "^2.6.11"
   }
 }
