@@ -30,22 +30,28 @@ export class ChainGame {
 
 
     /** 音声コンテキスト */
-    static audioCtx = new AudioContext();
+    static audioCtx: AudioContext | undefined;
 
     /** 音量設定用のゲインノード群 */
-    static gainNodes = new Array(4).fill(0).map((_, i) => {
-        const gainNode = ChainGame.audioCtx.createGain();
-        gainNode.gain.value = 0;
-        gainNode.connect(ChainGame.audioCtx.destination);
+    static gainNodes: GainNode[] | undefined;
 
-        const osc = new OscillatorNode(ChainGame.audioCtx);
-        osc.type = 'sine';
-        osc.frequency.value = 300 + i * 100;
-        osc.connect(gainNode);
-        osc.start();
-        
-        return gainNode;
-    });
+    /** 音声コンテキストとゲインノードの初期化 */
+    static initAudioCtx(): void {
+        ChainGame.audioCtx = new AudioContext();
+        ChainGame.gainNodes = Array.from({ length: 4 }, (_, i) => {
+            const gainNode = ChainGame.audioCtx!.createGain();
+            gainNode.gain.value = 0;
+            gainNode.connect(ChainGame.audioCtx!.destination);
+
+            const osc = new OscillatorNode(ChainGame.audioCtx!);
+            osc.type = 'sine';
+            osc.frequency.value = 300 + i * 100;
+            osc.connect(gainNode);
+            osc.start();
+
+            return gainNode;
+        });
+    }
 
 
     constructor(
@@ -90,7 +96,6 @@ export class ChainGame {
             }
         }
 
-        // TODO: requestAnimationFrameを使うよりも早い？ 要検証
         this.timer = setInterval(this.update.bind(this), 1000 / 60);
 
         console.log('chain game started!');
@@ -141,6 +146,10 @@ export class ChainGame {
     /** 効果音の再生 */
     private playSound() {
 
+        if (!ChainGame.gainNodes) {
+            return;
+        }
+
         const counts = [0, 0, 0, 0];
         for (const parts of this.parts ?? []) {
             for (const part of parts) {
@@ -149,15 +158,15 @@ export class ChainGame {
                 }
             }
         }
-        
-        counts.forEach((count, i) => {
+
+        for (const [i, count] of counts.entries()) {
             if (count > 0) {
                 const { gain } = ChainGame.gainNodes[i];
                 gain.value = Math.min(0.008 + count * 0.002, 0.1);
                 setTimeout(() => gain.value = 0, 100);
             }
-        });
-        
+        }
+
     }
 
     /** 画面描画 */
@@ -182,6 +191,10 @@ export class ChainGame {
         const x = Math.floor((e.clientX - this.canvasRect.x) / PART_SIZE);
         const y = Math.floor((e.clientY - this.canvasRect.y) / PART_SIZE);
         this.parts?.[y][x].rotate();
+
+        if (!ChainGame.audioCtx) {
+            ChainGame.initAudioCtx();
+        }
 
     }
 
