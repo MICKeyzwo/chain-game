@@ -12,9 +12,9 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "gh-pages": "^2.2.0",
-    "sass": "^1.43.3",
-    "typescript": "^3.9.10",
-    "vite": "^2.6.11"
+    "gh-pages": "^6.3.0",
+    "sass": "^1.89.2",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
   }
 }
